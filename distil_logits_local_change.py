@@ -127,8 +127,8 @@ model_kwargs = {"torch_dtype": torch.bfloat16}
 if config["model_config"]["use_flash_attention"]:
     model_kwargs["attn_implementation"] = "flash_attention_2"
 
-teacher_model = AutoModelForCausalLM.from_pretrained(config["models"]["teacher"], **model_kwargs)
-student_model = AutoModelForCausalLM.from_pretrained(config["models"]["student"], **model_kwargs)
+t_model = AutoModelForCausalLM.from_pretrained(config["models"]["teacher"], **model_kwargs)
+s_model = AutoModelForCausalLM.from_pretrained(config["models"]["student"], **model_kwargs)
 
 # Optionally freeze layers of the student model based on spectrum configuration
 if "spectrum" in config and "layers_to_unfreeze" in config["spectrum"]:
@@ -144,7 +144,7 @@ if "spectrum" in config and "layers_to_unfreeze" in config["spectrum"]:
 
 
     # Apply freezing to student model
-    freeze_student_spectrum(student_model, config["spectrum"]["layers_to_unfreeze"])
+    freeze_student_spectrum(s_model, config["spectrum"]["layers_to_unfreeze"])
 else:
     print("Spectrum configuration not found. All layers of the student model will be trainable.")
 
@@ -197,7 +197,7 @@ training_arguments = TrainingArguments(**config["training"])
 
 # Create the custom SFT Trainer
 trainer = LogitsTrainer(
-    model=student_model,
+    model=s_model,
     train_dataset=tokenized_dataset["train"],
     eval_dataset=tokenized_dataset["test"],
     tokenizer=student_tokenizer,
@@ -206,7 +206,7 @@ trainer = LogitsTrainer(
 )
 
 # Add the teacher model to the trainer
-trainer.teacher_model = teacher_model
+trainer.teacher_model = t_model
 
 # Prepare for distributed training
 trainer = accelerator.prepare(trainer)
