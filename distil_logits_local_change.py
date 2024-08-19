@@ -53,9 +53,13 @@ config = {
     },
     "model_config": {
         "use_flash_attention": True
-    }
+    },
+    "prompt": {
+        "system": "You are a helpful assistant."
+    },
     # "spectrum": {
-    #     "layers_to_unfreeze": "/workspace/spectrum/snr_results_Qwen-Qwen2-1.5B_unfrozenparameters_50percent.yaml" # You can pass a spectrum yaml file here to freeze layers identified by spectrum.
+    #     # You can pass a spectrum yaml file here to freeze layers identified by spectrum.
+    #     "layers_to_unfreeze": "/workspace/spectrum/snr_results_Qwen-Qwen2-1.5B_unfrozenparameters_50percent.yaml"
     # }
 }
 
@@ -96,7 +100,7 @@ def sharegpt_format(example):
                     message.insert(0, {"role": "system", "content": conversation.get('value', '')})
 
     if not any(msg.get('role') == 'system' for msg in message):
-        message.insert(0, {"role": "system", "content": "You are a helpful assistant."})
+        message.insert(0, {"role": "system", "content": config["prompt"]["system"]})
 
     text = student_tokenizer.apply_chat_template(message, tokenize=False, add_generation_prompt=True)
     return {"text": text}
